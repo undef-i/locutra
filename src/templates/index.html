@@ -11,10 +11,8 @@
 </head>
 <body>
     <div id="loading" class="loading-screen">
-        <span class="loading-text">Loading...</span>
-        <div class="loading-progress">
-            <div class="loading-progress-bar"></div>
-        </div>
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Loading application...</span>
     </div>
 
     <div class="app-container">
@@ -88,12 +86,109 @@
     <script>
         document.getElementById('copyright-year').textContent = new Date().getFullYear();
     </script>
- 
+    
+    <script>
+        function showLoading(show) {
+            const loadingElement = document.getElementById('loading');
+            
+            if (show) {
+                loadingElement.style.display = 'flex';
+                loadingElement.style.opacity = '1';
+                loadingElement.style.visibility = 'visible';
+                document.getElementById('quiz-container').style.display = 'none';
+            } else {
+                loadingElement.style.opacity = '0';
+                loadingElement.style.visibility = 'hidden';
+                document.getElementById('quiz-container').style.display = 'block';
+                
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                    loadingElement.style.zIndex = '-1';
+                }, 100);
+            }
+        }
+
+        function updateProgress(usedAreasSize, maxQuestions) {
+            const progress = (usedAreasSize / maxQuestions) * 100;
+            const progressElement = document.getElementById('progress');
+            if (progressElement) {
+                progressElement.style.width = `${progress}%`;
+            }
+        }
+
+        window.showLoading = showLoading;
+        window.updateProgress = updateProgress;
+    </script>
+
     <script>
         async function loadWasm() {
             try {
-                const wasmResponse = await fetch('locutra_bg.wasm');
-                const wasmBuffer = await wasmResponse.arrayBuffer();
+                const loadingText = document.querySelector('.loading-text');
+                loadingText.textContent = 'Loading data...';
+
+                let wasmBuffer;
+                const dbName = 'LocutraDB';
+                const storeName = 'wasm';
+                const wasmKey = 'locutra-wasm-<%= htmlWebpackPlugin.options.wasmHash %>';
+
+                try {
+                    const db = await new Promise((resolve, reject) => {
+                        const request = indexedDB.open(dbName, 1);
+                        request.onerror = () => reject(request.error);
+                        request.onsuccess = () => resolve(request.result);
+                        request.onupgradeneeded = (e) => {
+                            const db = e.target.result;
+                            if (!db.objectStoreNames.contains(storeName)) {
+                                db.createObjectStore(storeName);
+                            }
+                        };
+                    });
+
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+
+                    const keys = await new Promise(resolve => {
+                        const request = store.getAllKeys();
+                        request.onsuccess = () => resolve(request.result);
+                    });
+                    
+                    for (const key of keys) {
+                        if (key.startsWith('locutra-wasm-') && key !== wasmKey) {
+                            store.delete(key);
+                        }
+                    }
+
+                    const cachedWasm = await new Promise(resolve => {
+                        const request = store.get(wasmKey);
+                        request.onsuccess = () => resolve(request.result);
+                    });
+
+                    if (cachedWasm) {
+                        wasmBuffer = cachedWasm;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load WASM from IndexedDB:', e);
+                }
+
+                if (!wasmBuffer) {
+                    const wasmResponse = await fetch('locutra_bg.wasm');
+                    wasmBuffer = await wasmResponse.arrayBuffer();
+                    
+                    try {
+                        const db = await new Promise((resolve, reject) => {
+                            const request = indexedDB.open(dbName, 1);
+                            request.onerror = () => reject(request.error);
+                            request.onsuccess = () => resolve(request.result);
+                        });
+
+                        const transaction = db.transaction(storeName, 'readwrite');
+                        const store = transaction.objectStore(storeName);
+                        store.put(wasmBuffer, wasmKey);
+                    } catch (e) {
+                        console.warn('Failed to cache WASM in IndexedDB:', e);
+                    }
+                }
+                
                 const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
                     wbg: {
                         __wbindgen_init_externref_table: function() {
@@ -124,7 +219,7 @@
             } catch (error) {
                 console.error('Failed to load WASM:', error);
                 document.getElementById('loading').textContent = 
-                    'Failed to load WASM. Please refresh and try again.';
+                    'Failed to load. Please refresh the page.';
             }
         }
 

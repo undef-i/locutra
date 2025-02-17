@@ -8,8 +8,8 @@ Requirements:
 - Node.js >= 18
 - Modern browser
 
+Quick start with pre-compiled WebAssembly:
 ```bash
-# Quick start with pre-compiled WebAssembly
 SKIP_RUST=true npm install
 npm run build:web
 npm run dev
@@ -19,7 +19,6 @@ For WebAssembly development:
 ```bash
 npm install
 npm run build
-npm run dev
 ```
 
 ## License

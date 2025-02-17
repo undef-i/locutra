@@ -356,7 +356,7 @@ function initChart() {
 
 async function initApp() {
   try {
-    showLoading(true);
+    window.showLoading(true);
   
     if (!window.wasmHelpers || !window.wasmHelpers.get_geo_data) {
       throw new Error('WASM helpers not initialized');
@@ -395,7 +395,7 @@ async function initApp() {
     console.log('Map initialized:', state.regionList.length);
     
     updateProgress();
-    showLoading(false);
+    window.showLoading(false);
     startNewQuestion();
     
   } catch (error) {
@@ -656,47 +656,9 @@ window.initApp = initApp;
 window.checkAnswer = checkAnswer;
 window.restartGame = restartGame;
 
-function showLoading(show) {
-  const loadingElement = document.getElementById('loading');
-  const progressBar = loadingElement.querySelector('.loading-progress-bar');
-  const loadingText = loadingElement.querySelector('.loading-text');
-  
-  if (show) {
-    loadingElement.style.display = 'flex';
-    loadingElement.style.opacity = '1';
-    loadingElement.style.visibility = 'visible';
-    elements.quizContainer.style.display = 'none';
-    
-    let progress = 0;
-    const updateProgress = () => {
-      if (progress < 90) {
-        progress += Math.random() * 30;
-        progress = Math.min(progress, 90);
-        progressBar.style.width = `${progress}%`;
-        setTimeout(updateProgress, 100 + Math.random() * 200);
-      }
-    };
-    updateProgress();
-  } else {
-    progressBar.style.width = '100%';
-    loadingElement.style.opacity = '0';
-    loadingElement.style.visibility = 'hidden';
-    elements.quizContainer.style.display = 'block';
-    
-    setTimeout(() => {
-      loadingElement.style.display = 'none';
-      loadingElement.style.zIndex = '-1';
-    }, 100);
-  }
-}
-
 function updateProgress() {
   if (!state.regionList) return;
-  const progress = (state.usedAreas.size / MAX_QUESTIONS) * 100;
-  const progressElement = document.getElementById('progress');
-  if (progressElement) {
-    progressElement.style.width = `${progress}%`;
-  }
+  window.updateProgress(state.usedAreas.size, MAX_QUESTIONS);
 }
 
 function adjustButtonTextSizes() {
