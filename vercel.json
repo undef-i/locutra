@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "public",
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false
+}

@@ -1,0 +1,15 @@
+{
+  "name": "locutra",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "locutra_bg.wasm",
+    "locutra.js",
+    "locutra.d.ts"
+  ],
+  "main": "locutra.js",
+  "types": "locutra.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

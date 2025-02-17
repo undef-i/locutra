@@ -1,0 +1,8 @@
+/public
+node_modules
+/pkg
+.DS_Store
+**/wasm/target  
+Cargo.lock
+package-lock.json
+pnpm-lock.yaml

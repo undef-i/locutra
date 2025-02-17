@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locutra</title>
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Locutra" />
+    <meta name="twitter:description" content="An geography quiz." />
+    <%= htmlWebpackPlugin.tags.headTags %>
+</head>
+<body>
+    <div id="loading" class="loading-screen">
+        <span class="loading-text">Loading...</span>
+        <div class="loading-progress">
+            <div class="loading-progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <nav class="app-nav">
+        </nav>
+
+        <main class="app-main">
+            <div id="quiz-container" class="quiz-section">
+                <div class="status-bar">
+                    <div class="score-container">
+                        <div class="score-display">
+                            得分: <span id="adjusted-score">0</span>
+                        </div>
+                        <div class="stats-display">
+                            正确率: <span id="current-accuracy">0</span>%
+                            (正确: <span id="correct-count">0</span>,
+                            错误: <span id="wrong-count">0</span>)
+                        </div>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress" class="progress-fill"></div>
+                    </div>
+                    <div class="question-progress">
+                        题目: <span id="current-question">1</span> / <span id="total-questions">25</span>
+                    </div>
+                </div>
+
+                <div class="map-section">
+                    <div id="map-chart"></div>
+                </div>
+
+                <div id="options" class="options-grid"></div>
+            </div>
+
+            <div id="game-over" class="end-screen">
+                <div class="result-card">
+                    <div class="final-stats">
+                        <div class="rank-display">
+                            <span class="rank-label">评级</span>
+                            <span id="rank-grade" class="rank-grade">S</span>
+                        </div>
+                        
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <span class="stat-label">最终得分</span>
+                                <span id="final-adjusted-score" class="stat-value">0</span><span class="unit">分</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">正确率</span>
+                                <span id="accuracy" class="stat-value">0</span><span class="unit">%</span>
+                            </div>
+                        </div>
+
+                        <div class="distribution-chart">
+                            <div id="score-distribution"></div>
+                            <div class="percentile">
+                                超过了 <span id="percentile">0</span>% 的玩家
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="restartGame()" class="restart-button">重新开始</button>
+                </div>
+            </div>
+        </main>
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; <span id="copyright-year"></span> Noxylva</p>
+            </div>
+        </footer>
+    </div>
+    <script>
+        document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    </script>
+ 
+    <script>
+        async function loadWasm() {
+            try {
+                const wasmResponse = await fetch('locutra_bg.wasm');
+                const wasmBuffer = await wasmResponse.arrayBuffer();
+                const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
+                    wbg: {
+                        __wbindgen_init_externref_table: function() {
+                            const table = this.__wbindgen_export_0;
+                            const offset = table.grow(4);
+                            table.set(0, undefined);
+                            table.set(offset + 0, undefined);
+                            table.set(offset + 1, null);
+                            table.set(offset + 2, true);
+                            table.set(offset + 3, false);
+                        }
+                    }
+                });
+
+                const wasm = wasmModule.instance.exports;
+                window.wasmHelpers = {
+                    get_geo_data: () => {
+                        const ret = wasm.get_geo_data();
+                        const ptr = ret[0];
+                        const len = ret[1];
+                        const memory = new Uint8Array(wasm.memory.buffer);
+                        const text = new TextDecoder().decode(memory.subarray(ptr, ptr + len));
+                        wasm.__wbindgen_free(ptr, len, 1);
+                        return text;
+                    }
+                };
+                window.initWasm().catch(console.error);
+            } catch (error) {
+                console.error('Failed to load WASM:', error);
+                document.getElementById('loading').textContent = 
+                    'Failed to load WASM. Please refresh and try again.';
+            }
+        }
+
+        window.addEventListener('load', loadWasm);
+    </script>
+</body>
+</html>
