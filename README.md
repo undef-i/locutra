@@ -20,6 +20,7 @@ For WebAssembly development:
 npm install
 npm run build
 ```
+> The current WASM implementation unnecessarily bundles Brotli-compressed data with decompression logic. This adds complexity without tangible benefits, as compression should be handled at the server level. This flawed approach will be removed in future versions.
 
 ## License
 
