@@ -24,5 +24,4 @@ npm run build
 
 ## License
 
-[GNU AGPL v3.0](LICENSE) © 2025 Noxylva
-
+[GNU AGPL v3.0](LICENSE)
